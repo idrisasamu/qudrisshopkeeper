@@ -66,7 +66,7 @@ class _JoinShopPageState extends State<JoinShopPage> {
           FilledButton(
             onPressed: _completeJoin,
             child: const Text('Complete setup'),
-          )
+          ),
         ],
       ),
     );

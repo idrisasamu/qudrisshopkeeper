@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'email_config_store.dart';
+import 'email_transport.dart';
 
 class EmailConfigPage extends StatefulWidget {
   const EmailConfigPage({super.key});
@@ -98,11 +100,24 @@ class _EmailConfigPageState extends State<EmailConfigPage> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: () async {
-              // TODO(Cursor): persist securely (e.g., flutter_secure_storage) and test connection
+              final cfg = EmailConfig(
+                smtpHost: smtpHost.text.trim(),
+                smtpPort: int.tryParse(smtpPort.text) ?? 587,
+                smtpUseSsl: smtpSsl,
+                smtpUsername: smtpUser.text.trim(),
+                smtpPassword: smtpPass.text,
+                imapHost: imapHost.text.trim(),
+                imapPort: int.tryParse(imapPort.text) ?? 993,
+                imapUseSsl: imapSsl,
+                imapUsername: imapUser.text.trim(),
+                imapPassword: imapPass.text,
+                inboxFolder: inboxFolder.text.trim(),
+                processedFolder: processedFolder.text.trim(),
+              );
+              await EmailConfigStore().save(cfg);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Saved email settings')),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved email settings')));
+                Navigator.pop(context);
               }
             },
             child: const Text('Save'),

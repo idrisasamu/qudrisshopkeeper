@@ -8,6 +8,9 @@ import 'sms_transport.dart';
 import 'crypto_box.dart';
 import '../../common/key_vault.dart';
 import 'sync_orchestrator.dart';
+import 'email_config_store.dart';
+import 'sync_service.dart';
+import 'email_config_page.dart';
 
 class SyncPage extends ConsumerWidget {
   const SyncPage({super.key});
@@ -29,50 +32,37 @@ class SyncPage extends ConsumerWidget {
             ),
             const Divider(),
             ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Configure Email'),
+              subtitle: const Text('SMTP/IMAP credentials'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EmailConfigPage())),
+            ),
+            ListTile(
               leading: const Icon(Icons.email),
               title: const Text('Sync now via Email'),
               subtitle: const Text('Requires SMTP/IMAP to be configured.'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () async {
-                final orchestrator = SyncOrchestrator(
-                  engine: sync,
-                  selfDeviceId: 'ADMIN-DEVICE', // TODO: bind device id
-                  shopShortId: 'SHOP01',        // TODO: bind
-                  email: EmailTransportImpl(),
-                  sms: SmsTransportImpl(),
-                  keyVault: KeyVault(),
-                  crypto: CryptoBox(),
-                );
+                final store = EmailConfigStore();
+                final cfg = await store.load();
+                if (cfg == null) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Configure Email first.')));
+                    return;
+                  }
+                }
 
-                // TODO: load email config from storage/UI
-                final cfg = EmailConfig(
-                  smtpHost: 'smtp.example.com',
-                  smtpPort: 587,
-                  smtpUseSsl: false,
-                  smtpUsername: 'user@example.com',
-                  smtpPassword: 'app-password',
-                  imapHost: 'imap.example.com',
-                  imapPort: 993,
-                  imapUseSsl: true,
-                  imapUsername: 'user@example.com',
-                  imapPassword: 'app-password',
-                );
+                // TODO: load peers from Users table; for now one example
+                final peers = <Peer>[
+                  const Peer(deviceId: 'SALES-DEVICE-1', displayName: 'Sales 1', emailAddress: 'sales1@example.com'),
+                ];
 
-                // Example peer (Sales)
-                final peer = Peer(
-                  deviceId: 'SALES-DEVICE-1',
-                  displayName: 'Sales 1',
-                  emailAddress: 'sales1@example.com',
-                );
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sending email delta…')),
-                );
-                await orchestrator.sendEmailDelta(cfg: cfg, peer: peer);
+                final service = ref.read(syncServiceProvider);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email sync…')));
+                await service.syncNowEmail(cfg: cfg!, peers: peers);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Email delta sent.')),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email sync complete.')));
                 }
               },
             ),
@@ -85,14 +75,21 @@ class SyncPage extends ConsumerWidget {
                 final orchestrator = SyncOrchestrator(
                   engine: ref.read(syncEngineProvider),
                   selfDeviceId: 'SALES-DEVICE-1', // TODO
-                  shopShortId: 'SHOP01',          // TODO
+                  shopShortId: 'SHOP01', // TODO
                   email: EmailTransportImpl(),
                   sms: SmsTransportImpl(),
                   keyVault: KeyVault(),
                   crypto: CryptoBox(),
                 );
-                final smsCfg = SmsConfig(selfDeviceId: 'SALES-DEVICE-1', shopShortId: 'SHOP01');
-                final peer = SmsPeer(deviceId: 'ADMIN-DEVICE', displayName: 'Admin', phoneNumber: '+10000000000');
+                final smsCfg = SmsConfig(
+                  selfDeviceId: 'SALES-DEVICE-1',
+                  shopShortId: 'SHOP01',
+                );
+                final peer = SmsPeer(
+                  deviceId: 'ADMIN-DEVICE',
+                  displayName: 'Admin',
+                  phoneNumber: '+10000000000',
+                );
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Sending SMS delta…')),

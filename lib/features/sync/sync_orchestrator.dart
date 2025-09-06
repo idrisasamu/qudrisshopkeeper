@@ -58,14 +58,18 @@ class SyncOrchestrator {
       'from_device': selfDeviceId,
       'to_device': peer.deviceId,
       'ts': delta.ts,
-      'ops': delta.ops.map((o) => {
-        'uuid': o.uuid,
-        'entity': o.entity,
-        'op': o.op,
-        'payload': o.payload,
-        'ts': o.ts,
-        'device_id': o.deviceId,
-      }).toList(),
+      'ops': delta.ops
+          .map(
+            (o) => {
+              'uuid': o.uuid,
+              'entity': o.entity,
+              'op': o.op,
+              'payload': o.payload,
+              'ts': o.ts,
+              'device_id': o.deviceId,
+            },
+          )
+          .toList(),
     };
 
     final sealed = await crypto.sealJson(json: plain, keyBytes: key);
@@ -81,9 +85,7 @@ class SyncOrchestrator {
   }
 
   /// Poll IMAP and apply incoming deltas.
-  Future<void> pollEmail({
-    required EmailConfig cfg,
-  }) async {
+  Future<void> pollEmail({required EmailConfig cfg}) async {
     final envs = await (email as EmailTransportImpl).fetchNow(
       config: cfg,
       shopShortId: shopShortId,
@@ -99,6 +101,57 @@ class SyncOrchestrator {
 
       // Attempt open with known keys in vault (not efficient, but fine for MVP small N).
       // Replace with indexing by fromDevice once you trust the subject.
+    }
+  }
+
+  Future<void> pollEmailApply({
+    required EmailConfig cfg,
+    required List<Peer> knownPeers,
+  }) async {
+    final envs = await (email as EmailTransportImpl).fetchNow(
+      config: cfg,
+      shopShortId: shopShortId,
+    );
+
+    for (final env in envs) {
+      // Try decrypt with key of each known peer until success.
+      bool applied = false;
+      for (final peer in knownPeers) {
+        final key = await keyVault.loadPeerKey(peer.deviceId);
+        if (key == null) continue;
+
+        try {
+          // Rebuild sealed = nonce(24) || cipher
+          final sealed = Uint8List(env.nonce.length + env.cipher.length)
+            ..setAll(0, env.nonce)
+            ..setAll(env.nonce.length, env.cipher);
+          final plain = await crypto.openToJson(sealed: sealed, keyBytes: key);
+          // Validate from/to device
+          final fromDev = plain['from_device'] as String? ?? '';
+          final toDev = plain['to_device'] as String? ?? '';
+          if (toDev.isNotEmpty && toDev != selfDeviceId) continue;
+
+          // Parse ops
+          final opsJson = (plain['ops'] as List).cast<Map<String, dynamic>>();
+          final ops = opsJson.map((o) => SyncOp(
+            uuid: o['uuid'] as String,
+            entity: o['entity'] as String,
+            op: o['op'] as String,
+            payload: Map<String, dynamic>.from(o['payload'] as Map),
+            ts: (o['ts'] as num).toInt(),
+            deviceId: o['device_id'] as String,
+          )).toList();
+
+          await engine.applyRemoteOps(ops);
+          applied = true;
+          break;
+        } catch (_) {
+          // try next key
+        }
+      }
+      if (!applied && kDebugMode) {
+        // Could not decrypt with known keys; ignore.
+      }
     }
   }
 
@@ -118,14 +171,18 @@ class SyncOrchestrator {
       'from_device': selfDeviceId,
       'to_device': peer.deviceId,
       'ts': delta.ts,
-      'ops': delta.ops.map((o) => {
-        'uuid': o.uuid,
-        'entity': o.entity,
-        'op': o.op,
-        'payload': o.payload,
-        'ts': o.ts,
-        'device_id': o.deviceId,
-      }).toList(),
+      'ops': delta.ops
+          .map(
+            (o) => {
+              'uuid': o.uuid,
+              'entity': o.entity,
+              'op': o.op,
+              'payload': o.payload,
+              'ts': o.ts,
+              'device_id': o.deviceId,
+            },
+          )
+          .toList(),
     };
 
     final sealed = await crypto.sealJson(json: plain, keyBytes: key);

@@ -173,8 +173,12 @@ class SyncEngineImpl implements SyncEngine {
 
   @override
   Future<void> reconcile() async {
-    // Placeholder: transports will call buildDeltaForPeer() and send.
-    // Here you can orchestrate: check peers from Users table, build/send, poll inbox, apply.
+    // This concrete engine stays transport-agnostic.
+    // Orchestration happens in SyncOrchestrator; here we could
+    // - noop or
+    // - run integrity checks, compactions, etc.
+    // Keeping as NOOP for now.
+    return;
   }
 }
 

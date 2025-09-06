@@ -38,7 +38,9 @@ class StartPage extends StatelessWidget {
                 title: const Text('I am a Sales user'),
                 subtitle: const Text('Record sales, see stock on hand'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const JoinShopPage())),
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const JoinShopPage())),
               ),
             ),
           ],
