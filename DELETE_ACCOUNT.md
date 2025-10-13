@@ -2,7 +2,7 @@
 
 If you would like to delete your account and all associated data from Qudris Shopkeeper, please send an email to:
 
-📧 **support@qudrisintegral.com**  
+📧 **qudrisgroup@gmail.com**  
 
 Include the subject line: **Delete My Account – Qudris Shopkeeper**  
 
