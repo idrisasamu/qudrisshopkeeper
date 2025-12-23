@@ -51,10 +51,13 @@ class AuthService {
   }
 
   /// Get email redirect URL for email confirmation links
+  /// Note: Email links are always opened in browsers, so we use the web URL
+  /// even when the app is running on mobile
   String _getEmailRedirectUrl() {
-    // For web, use the Vercel deployment URL or localhost for dev
+    const productionUrl = 'https://qudrisshopkeeper.vercel.app';
+    
     if (kIsWeb) {
-      const productionUrl = 'https://qudrisshopkeeper.vercel.app';
+      // For web, use the Vercel deployment URL or localhost for dev
       const isProduction = bool.fromEnvironment('dart.vm.product');
       if (isProduction) {
         return productionUrl;
@@ -62,8 +65,9 @@ class AuthService {
         return '${Uri.base.origin}/auth/callback';
       }
     } else {
-      // For mobile, use deep link
-      return 'qudrisshopkeeper://auth/callback';
+      // For mobile apps, email confirmation links are opened in browser,
+      // so we use the web URL (Vercel) instead of deep link
+      return productionUrl;
     }
   }
 
