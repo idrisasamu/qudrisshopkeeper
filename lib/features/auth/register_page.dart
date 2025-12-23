@@ -47,13 +47,26 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       );
 
       if (mounted) {
-        // Show success message
+        // Show success message with token verification instructions
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Account created! Please check your email to verify.',
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Account created! Check your email for a verification token.',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Visit: qudrisshopkeeper.vercel.app/verify-token.html',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
             ),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 6),
           ),
         );
         // Navigate to sign in

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - Qudris ShopKeeper</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="forest-container">
+        <!-- Animated forest background -->
+        <div class="forest-layer layer-1"></div>
+        <div class="forest-layer layer-2"></div>
+        <div class="forest-layer layer-3"></div>
+        
+        <!-- Animated child running -->
+        <div class="child-container">
+            <div class="child-shadow"></div>
+            <div class="child-silhouette">
+                <div class="child-body"></div>
+                <div class="child-arms">
+                    <div class="arm left"></div>
+                    <div class="arm right"></div>
+                </div>
+                <div class="child-legs">
+                    <div class="leg left"></div>
+                    <div class="leg right"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating particles (fireflies) -->
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+
+        <!-- Main content overlay -->
+        <div class="content-overlay">
+            <div class="card" id="loadingCard">
+                <div class="spinner"></div>
+                <h2>Verifying Email...</h2>
+                <p>Please wait while we verify your email address</p>
+            </div>
+
+            <div class="card hidden" id="successCard">
+                <div class="success-icon">✓</div>
+                <h2>Email Verified!</h2>
+                <p id="successMessage">Your email has been successfully verified. You can now sign in to your account.</p>
+                <button class="btn-primary" id="continueBtn">Continue to App</button>
+            </div>
+
+            <div class="card hidden" id="errorCard">
+                <div class="error-icon">✕</div>
+                <h2>Verification Failed</h2>
+                <p id="errorMessage">There was a problem verifying your email. The token may have expired or is invalid.</p>
+                <button class="btn-secondary" id="retryBtn">Try Again</button>
+            </div>
+
+            <div class="card hidden" id="tokenInputCard">
+                <div class="reset-icon">📧</div>
+                <h2>Verify Your Email</h2>
+                <p>Enter the verification token sent to your email</p>
+                <form id="tokenForm">
+                    <div class="form-group">
+                        <label for="tokenInput">Verification Token</label>
+                        <input type="text" id="tokenInput" required 
+                               placeholder="Enter token from email" maxlength="6"
+                               pattern="[0-9]{6}" inputmode="numeric">
+                        <small>Enter the 6-digit code from your email</small>
+                    </div>
+                    <div class="error-message hidden" id="tokenError"></div>
+                    <button type="submit" class="btn-primary" id="verifyTokenBtn">
+                        Verify Email
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="verify-token.js"></script>
+</body>
+</html>
+

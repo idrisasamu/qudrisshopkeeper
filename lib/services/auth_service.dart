@@ -29,6 +29,8 @@ class AuthService {
   }
 
   /// Sign up with email and password
+  /// Uses token-based email verification instead of redirect URL
+  /// The email will contain a token that users enter on the verification page
   Future<AuthResponse> signUpWithEmail({
     required String email,
     required String password,
@@ -36,11 +38,13 @@ class AuthService {
     String? emailRedirectTo,
   }) async {
     try {
+      // Don't use emailRedirectTo - Supabase will send OTP token via email instead
+      // Users will verify using the token on the verify-token page
       final response = await _client.auth.signUp(
         email: email,
         password: password,
         data: {if (fullName != null) 'full_name': fullName},
-        emailRedirectTo: emailRedirectTo ?? _getEmailRedirectUrl(),
+        // No emailRedirectTo - this makes Supabase send a token instead
       );
 
       return response;
