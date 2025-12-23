@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../users/join_shop_page.dart';
 
 class StartPage extends StatelessWidget {
   const StartPage({super.key});
@@ -19,28 +18,17 @@ class StartPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Choose how this device will be used. You can change later in Settings.',
+              'ShopKeeper - Your complete inventory and sales management solution.',
             ),
             const SizedBox(height: 24),
             Card(
               child: ListTile(
-                title: const Text('I am the Admin (Shop Owner)'),
+                title: const Text('Enter ShopKeeper'),
                 subtitle: const Text(
-                  'Create shop, manage items, invite sales users',
+                  'Manage inventory, process sales, and track your business',
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/admin'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: ListTile(
-                title: const Text('I am a Sales user'),
-                subtitle: const Text('Record sales, see stock on hand'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const JoinShopPage())),
               ),
             ),
           ],

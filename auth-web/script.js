@@ -193,7 +193,7 @@ function showSuccess(title, message) {
         // Update this URL to match your app's URL
         const appUrl = window.location.hostname.includes('localhost') 
             ? 'http://localhost:8080/signin'
-            : 'https://qudrisshopkeeper.app/signin';
+            : 'https://qudrisshopkeeper.vercel.app/signin';
         window.location.href = appUrl;
     };
 }
@@ -208,7 +208,7 @@ function showError(message) {
     retryBtn.onclick = () => {
         const appUrl = window.location.hostname.includes('localhost')
             ? 'http://localhost:8080/signin'
-            : 'https://qudrisshopkeeper.app/signin';
+            : 'https://qudrisshopkeeper.vercel.app/signin';
         window.location.href = appUrl;
     };
 }

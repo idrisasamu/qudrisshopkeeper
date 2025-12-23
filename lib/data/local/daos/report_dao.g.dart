@@ -1,0 +1,10 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'report_dao.dart';
+
+// ignore_for_file: type=lint
+mixin _$ReportDaoMixin on DatabaseAccessor<AppDatabase> {
+  $SalesTable get sales => attachedDatabase.sales;
+  $SaleItemsTable get saleItems => attachedDatabase.saleItems;
+  $ItemsTable get items => attachedDatabase.items;
+}

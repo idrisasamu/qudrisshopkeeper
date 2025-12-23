@@ -1,0 +1,5 @@
+storeFile=../release.keystore
+storePassword=CHANGE_ME
+keyAlias=qudris
+keyPassword=CHANGE_ME
+

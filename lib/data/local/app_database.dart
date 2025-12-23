@@ -1,37 +1,10 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
+import 'package:drift_sqflite/drift_sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 part 'app_database.g.dart';
-
-@DataClassName('Shop')
-class Shops extends Table {
-  TextColumn get id => text()(); // uuid
-  TextColumn get name => text()();
-  TextColumn get ownerUserId => text()();
-  TextColumn get smsHubPhone => text().nullable()();
-  DateTimeColumn get createdAt => dateTime()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-@DataClassName('UserRow')
-class Users extends Table {
-  TextColumn get id => text()();
-  TextColumn get shopId => text()();
-  TextColumn get role => text()(); // 'admin' | 'sales'
-  TextColumn get phone => text()();
-  TextColumn get email => text().nullable()();
-  TextColumn get username => text()(); // chosen by Admin
-  TextColumn get status => text().withDefault(const Constant('active'))();
-  DateTimeColumn get joinedAt => dateTime()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
 
 @DataClassName('Item')
 class Items extends Table {
@@ -41,11 +14,11 @@ class Items extends Table {
   TextColumn get sku => text().nullable()();
   TextColumn get barcode => text().nullable()();
   TextColumn get category => text().nullable()();
-  TextColumn get unit => text().withDefault(const Constant('unit'))();
-  RealColumn get costPrice => real().withDefault(const Constant(0.0))();
-  RealColumn get salePrice => real().withDefault(const Constant(0.0))();
-  RealColumn get minQty => real().withDefault(const Constant(0.0))();
-  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  TextColumn get unit => text()();
+  RealColumn get costPrice => real()();
+  RealColumn get salePrice => real()();
+  RealColumn get minQty => real()();
+  BoolColumn get isActive => boolean()();
   DateTimeColumn get updatedAt => dateTime()();
 
   @override
@@ -57,14 +30,13 @@ class StockMovements extends Table {
   TextColumn get id => text()();
   TextColumn get shopId => text()();
   TextColumn get itemId => text()();
-  TextColumn get type => text()(); // 'purchase' | 'sale' | 'adjust'
-  RealColumn get qty => real()(); // positive or negative
-  RealColumn get unitCost => real().nullable()();
-  RealColumn get unitPrice => real().nullable()();
+  TextColumn get type => text()(); // 'in', 'out', 'adjust'
+  RealColumn get qty => real()();
+  RealColumn get unitCost => real()();
+  RealColumn get unitPrice => real()();
   TextColumn get reason => text().nullable()();
   TextColumn get byUserId => text()();
   DateTimeColumn get at => dateTime()();
-  TextColumn get refId => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -74,109 +46,201 @@ class StockMovements extends Table {
 class Sales extends Table {
   TextColumn get id => text()();
   TextColumn get shopId => text()();
-  TextColumn get cashierId => text()();
-  DateTimeColumn get at => dateTime()();
-  RealColumn get total => real().withDefault(const Constant(0.0))();
-  TextColumn get paymentMethod => text().nullable()();
+  RealColumn get totalAmount => real()();
+  TextColumn get byUserId => text()();
+  DateTimeColumn get createdAt => dateTime()();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-@DataClassName('SaleLine')
-class SaleLines extends Table {
+@DataClassName('SaleItem')
+class SaleItems extends Table {
   TextColumn get id => text()();
   TextColumn get saleId => text()();
   TextColumn get itemId => text()();
-  RealColumn get qty => real()();
+  TextColumn get itemName => text()();
+  RealColumn get quantity => real()();
   RealColumn get unitPrice => real()();
-  RealColumn get lineTotal => real()();
+  RealColumn get totalPrice => real()();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-@DataClassName('AlertRow')
-class Alerts extends Table {
+@DataClassName('User')
+class Users extends Table {
   TextColumn get id => text()();
   TextColumn get shopId => text()();
-  TextColumn get itemId => text()();
-  RealColumn get threshold => real()();
-  DateTimeColumn get triggeredAt => dateTime()();
-  DateTimeColumn get resolvedAt => dateTime().nullable()();
+  TextColumn get username => text().unique()(); // unique per shop
+  TextColumn get name => text()(); // display name
+  TextColumn get email => text()(); // email address
+  TextColumn get role => text()(); // 'admin' | 'staff'
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+
+  // security
+  TextColumn get passwordHash => text()(); // base64
+  TextColumn get salt => text()(); // base64
+  TextColumn get kdf =>
+      text().withDefault(const Constant('pbkdf2-sha256/150000'))();
+
+  // new fields for default pin flow
+  BoolColumn get mustChangePassword =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get passwordUpdatedAt => dateTime().nullable()();
+
+  // sync
+  IntColumn get rev => integer().withDefault(const Constant(1))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-@DataClassName('SyncOpRow')
+@DataClassName('Shop')
+class Shops extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get email => text()();
+  TextColumn get key => text()();
+  TextColumn get appPassword => text()();
+  TextColumn get ownerName => text()();
+  TextColumn get country => text()();
+  TextColumn get city => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('SyncOp')
 class SyncOps extends Table {
-  TextColumn get uuid => text()(); // primary key for idempotency
-  TextColumn get entity => text()(); // table name
-  TextColumn get op => text()(); // 'create'|'update'
-  TextColumn get payloadJson => text()(); // serialized row json
-  IntColumn get ts => integer()(); // utc ms
-  TextColumn get deviceId => text()();
-  BoolColumn get applied => boolean().withDefault(const Constant(false))();
+  TextColumn get uuid => text()();
+  TextColumn get entity => text()(); // e.g., items, stock, sales
+  TextColumn get op => text()(); // e.g., create, update, adjust
+  TextColumn get payload => text()(); // json
+  IntColumn get ts => integer()(); // milliseconds UTC
+  BoolColumn get sent => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {uuid};
 }
 
-@DataClassName('Kv')
-class KvStore extends Table {
-  TextColumn get key => text()(); // e.g., 'lastRemoteTs', 'peer:<id>:lastAck'
-  TextColumn get value => text()();
+@DataClassName('AppliedOp')
+class AppliedOps extends Table {
+  TextColumn get uuid => text()(); // op id
+  IntColumn get ts => integer()(); // when applied locally
 
   @override
-  Set<Column> get primaryKey => {key};
+  Set<Column> get primaryKey => {uuid};
 }
 
 @DriftDatabase(
   tables: [
-    Shops,
-    Users,
     Items,
     StockMovements,
     Sales,
-    SaleLines,
-    Alerts,
+    SaleItems,
+    Users,
+    Shops,
     SyncOps,
-    KvStore,
+    AppliedOps,
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(_openConnection()) {
+    print('DEBUG: AppDatabase constructed');
+  }
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 11;
 
-  // --- Convenience queries / views ---
-
-  /// Sum of qty per item = on hand.
-  Future<double> onHandForItem(String itemId) async {
-    final res = await (select(
-      stockMovements,
-    )..where((m) => m.itemId.equals(itemId))).get();
-    return res.fold<double>(0.0, (acc, m) => acc + m.qty);
+  /// Ensure database is open before operations
+  Future<void> ensureOpen() async {
+    // Check if database connection is valid by attempting a simple query
+    try {
+      await customSelect('SELECT 1').get();
+    } catch (e) {
+      throw Exception('Database is closed. Please restart the app.');
+    }
   }
 
-  /// Today revenue (local time).
-  Future<double> todayRevenue() async {
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day);
-    final end = start.add(const Duration(days: 1));
-    final res = await (select(
-      sales,
-    )..where((s) => s.at.isBetweenValues(start, end))).get();
-    return res.fold<double>(0.0, (acc, s) => acc + s.total);
-  }
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) async {
+      await m.createAll();
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from == 1 && to == 2) {
+        // Add new tables for sales
+        await m.createTable(sales);
+        await m.createTable(saleItems);
+      }
+      if (from <= 2 && to == 3) {
+        // Add users table
+        await m.createTable(users);
+      }
+      if (from <= 3 && to == 4) {
+        // Add shops table
+        await m.createTable(shops);
+      }
+      if (from <= 4 && to == 5) {
+        // Ensure all tables exist with latest schema
+        await m.createTable(users);
+        await m.drop(shops);
+        await m.createTable(shops);
+      }
+      if (from <= 5 && to == 6) {
+        // Add sync operations table
+        await m.createTable(syncOps);
+      }
+      if (from <= 6 && to == 7) {
+        // Add applied operations table
+        await m.createTable(appliedOps);
+      }
+      if (from <= 7 && to == 8) {
+        // Update users table with new authentication fields
+        await m.drop(users);
+        await m.createTable(users);
+      }
+      if (from <= 8 && to == 9) {
+        // Add PIN change fields to users table
+        await m.addColumn(users, users.mustChangePassword);
+        await m.addColumn(users, users.passwordUpdatedAt);
+      }
+      if (from <= 9 && to == 10) {
+        // Update users table with new defaults and constraints
+        await m.alterTable(
+          TableMigration(
+            users,
+            newColumns: [users.mustChangePassword, users.passwordUpdatedAt],
+          ),
+        );
+      }
+      if (from <= 10 && to == 11) {
+        // Add shop profile fields to existing shops table
+        await m.addColumn(shops, shops.ownerName);
+        await m.addColumn(shops, shops.country);
+        await m.addColumn(shops, shops.city);
+        await m.addColumn(shops, shops.updatedAt);
+
+        // Add name and email fields to users table
+        await m.addColumn(users, users.name);
+        await m.addColumn(users, users.email);
+      }
+    },
+  );
 }
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dir.path, 'qsk.db'));
-    return NativeDatabase.createInBackground(file);
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'qsk.db'));
+    return SqfliteQueryExecutor.inDatabaseFolder(
+      path: 'qsk.db',
+      logStatements: false, // Disable logging to prevent issues
+    );
   });
 }

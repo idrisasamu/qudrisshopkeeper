@@ -1,0 +1,14 @@
+targets:
+  $default:
+    builders:
+      freezed:
+        options:
+          # Freezed options
+          union_key: 'type'
+          union_value_case: 'pascal'
+      json_serializable:
+        options:
+          # JSON serialization options
+          field_rename: snake
+          explicit_to_json: true
+
