@@ -133,7 +133,7 @@ class AuthService {
     try {
       await _client.auth.resetPasswordForEmail(
         email,
-        redirectTo: _getRedirectUrl(),
+        redirectTo: _getEmailRedirectUrl(),
       );
     } catch (e) {
       debugPrint('Reset password error: $e');
