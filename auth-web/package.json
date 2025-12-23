@@ -1,0 +1,21 @@
+{
+  "name": "qudris-shopkeeper-auth",
+  "version": "1.0.0",
+  "description": "Futuristic authentication page for Qudris ShopKeeper with African forest theme",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "auth",
+    "supabase",
+    "verification",
+    "password-reset"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}
+
